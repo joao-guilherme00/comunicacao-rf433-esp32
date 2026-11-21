@@ -5,9 +5,9 @@ Projeto desenvolvido para a disciplina de **Transmissão e Comunicação de Dado
 Toda a **Camada Física** (Codificação Manchester via *bit-banging*) e a **Camada de Enlace** (Enquadramento, CRC-8/Checksum e controle de fluxo ARQ com janela deslizante) foram implementadas manualmente no firmware, sem bibliotecas prontas de rádio.
 
 ## 👥 Integrantes do Grupo
-* **[Seu Nome Completo]**
-* **[Nome Completo do Colega 1]**
-* **[Nome Completo do Colega 2]**
+*  João Guilherme Lemes Corrêa
+*  Ranniery Bruno Moreira De Figueiredo
+*  Carlos César Marconcini Soares Santos
 
 ---
 
@@ -16,16 +16,18 @@ Toda a **Camada Física** (Codificação Manchester via *bit-banging*) e a **Cam
 ```text
 ├── Projeto_TX/
 │   ├── transmissor_esp32/
-│   │   └── transmissor_esp32.ino  # Firmware do Nó A (Transmissor + Menu Interativo)
+│   │   └── tx/
+│   │       └── tx.ino             # Firmware do Nó A (Transmissor + Menu Interativo)
 │   ├── python_sprits/
-│   │   └── transmissor.py         # Script Python PC -> ESP32 TX
+│   │   └── enviar_emoji.py        # Script Python PC -> ESP32 TX
 │   └── emojis/                    # Banco de imagens/emojis (.png) prontos para envio
 │
 └── Projeto_RX/
     ├── Receptor_esp32/
-    │   └── receptor_esp32.ino     # Firmware do Nó B (Receptor + LCD I2C + Reordenação)
+    │   └── rx/
+    │       └── rx.ino             # Firmware do Nó B (Receptor + LCD I2C + Reordenação)
     ├── python_sprits/
-    │   └── receptor.py            # Script Python ESP32 RX -> PC (ASCII + PNG)
+    │   └── receber_emoji.py       # Script Python ESP32 RX -> PC (ASCII + PNG)
     └── emojis/                    # Pasta de referência/saída de imagens
 ```
 
@@ -82,8 +84,8 @@ Toda a **Camada Física** (Codificação Manchester via *bit-banging*) e a **Cam
 
 ### Passo 1: Gravação dos Firmwares (Arduino IDE)
 1. Instale o pacote de placas **ESP32** na Arduino IDE e a biblioteca **`LiquidCrystal_I2C`**.
-2. Carregue `Projeto_TX/transmissor_esp32/transmissor_esp32.ino` no **ESP32 Transmissor**.
-3. Carregue `Projeto_RX/Receptor_esp32/receptor_esp32.ino` no **ESP32 Receptor**.
+2. Carregue `Projeto_TX/transmissor_esp32/tx/tx.ino` no **ESP32 Transmissor**.
+3. Carregue `Projeto_RX/Receptor_esp32/rx/rx.ino` no **ESP32 Receptor**.
 4. Ao ligar, o display LCD exibirá `"Receptor RF 433"` e `"Modo: CRC-8"`.
 
 ### Passo 2: Instalação das Dependências Python
@@ -95,19 +97,19 @@ pip install pyserial pillow
 
 ### Passo 3: Configuração das Portas COM e Execução
 1. **Feche o Monitor Serial** da Arduino IDE nos dois computadores (para liberar as portas COM).
-2. Abra `Projeto_TX/python_sprits/transmissor.py` e `Projeto_RX/python_sprits/receptor.py` e ajuste a variável `PORTA_USB` (atualmente `"COM4"`) para a porta serial de cada placa.
+2. Abra `Projeto_TX/python_sprits/enviar_emoji.py` e `Projeto_RX/python_sprits/receber_emoji.py` e ajuste a variável `PORTA_USB` (atualmente `"COM4"`) para a porta serial de cada placa.
 3. Abra o terminal na pasta raiz de cada lado e execute:
    * **No PC Receptor (dentro de `Projeto_RX/`):**
      ```bash
-     python python_sprits/receptor.py
+     python python_sprits/receber_emoji.py
      ```
    * **No PC Transmissor (dentro de `Projeto_TX/`):**
      ```bash
-     python python_sprits/transmissor.py
+     python python_sprits/enviar_emoji.py
      ```
 
 ### Passo 4: Comandos de Teste
-* **Texto no LCD:** Digite qualquer frase (ex.: `Ola Engenharia!`) no terminal do `transmissor.py` e pressione `Enter`. O texto será exibido no LCD do receptor.
+* **Texto no LCD:** Digite qualquer frase (ex.: `Ola Engenharia!`) no terminal do `enviar_emoji.py` e pressione `Enter`. O texto será exibido no LCD do receptor.
 * **Injeção de Erro (ARQ):** Digite `erro` e envie uma mensagem em seguida. O firmware inverterá o byte `FCS` (`fcs ^= 0xFF`) do próximo quadro; o receptor descartará o pacote corrompido e o transmissor fará a retransmissão automática após o *timeout*.
 * **Envio de Imagem / Emoji:** Digite o nome de qualquer imagem disponível dentro da pasta `Projeto_TX/emojis/` (ex.: `terra.png`). A imagem será convertida para bitmap `24x24` (72 bytes), enviada em 5 quadros `DATA` + 1 `END` via rádio, desenhada em ASCII no terminal receptor e salva/aberta como `emoji_recebido.png` (`360x360`).
 * **Menu Direto via Monitor Serial (Opcional):** Caso abra o Serial do TX diretamente (`115200 bps`), utilize as opções `` Texto, `` Emoji interno 16x16, `` Alternar CRC-8/Checksum (digite `3` no RX também para sincronizar), `` Alternar Stop-and-Wait/Go-Back-N/Selective Repeat e `` Simular erro.
